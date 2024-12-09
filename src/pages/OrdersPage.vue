@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="max-w-full">
     <OrderFilters
       @reset="handleFilterReset"
       @apply="handleFilterApply"
@@ -10,10 +10,12 @@
         v-model:status="selectedStatus"
         :orders="orders"
       />
-      <div class="flex-1">
+      <div class="flex-1 min-w-0">
         <OrdersTable 
-          :orders="filteredOrders" 
+          :orders="filteredOrders"
+          :per-page="perPage"
           @selection-change="handleSelectionChange"
+          @update:per-page="handlePerPageUpdate"
         />
       </div>
     </div>
@@ -21,12 +23,13 @@
     <OrdersActions
       :current-page="currentPage"
       :total-pages="totalPages"
-      :total-orders="filteredOrders.length"
+      :total-orders="totalOrders"
       :selected-count="selectedOrders.length"
       :selected-orders="selectedOrders"
       :start-index="startIndex"
       :end-index="endIndex"
       :orders="filteredOrders"
+      :per-page="perPage"
       @update:page="handlePageUpdate"
       @status-updated="fetchOrders"
     />
@@ -34,20 +37,25 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import OrderFilters from '@/components/orders/OrderFilters.vue'
 import OrdersTable from '@/components/orders/OrdersTable.vue'
 import StatusFilter from '@/components/orders/StatusFilter.vue'
 import OrdersActions from '@/components/orders/OrdersActions.vue'
 import { getOrders } from '@/services/orderService'
+import { useUser } from '@/composables/useUser'
 
 const selectedStatus = ref('all')
 const currentPage = ref(1)
-const itemsPerPage = 10
+const perPage = ref(20)
 const selectedOrders = ref([])
 const orders = ref([])
 const loading = ref(false)
 const error = ref(null)
+const totalOrders = ref(0)
+const totalPages = ref(1)
+
+const { userStore } = useUser()
 
 const activeFilters = ref({
   orderNumber: '',
@@ -57,18 +65,48 @@ const activeFilters = ref({
   lastEditDateTo: ''
 })
 
+// Handle keyboard shortcuts for per-page selection
+const handleKeyPress = (event) => {
+  if (event.metaKey || event.ctrlKey) {
+    switch (event.key) {
+      case '1':
+        handlePerPageUpdate(20)
+        break
+      case '2':
+        handlePerPageUpdate(50)
+        break
+      case '3':
+        handlePerPageUpdate(100)
+        break
+    }
+  }
+}
+
+onMounted(() => {
+  fetchOrders()
+  window.addEventListener('keydown', handleKeyPress)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyPress)
+})
+
 const fetchOrders = async (filters = {}) => {
   try {
     loading.value = true
     error.value = null
     
-    const apiFilters = {}
-    if (filters.orderNumber) {
-      apiFilters.orderIds = filters.orderNumber
+    const params = {
+      page: currentPage.value,
+      per_page: perPage.value,
+      store: userStore.value,
+      ...filters
     }
     
-    const response = await getOrders(apiFilters)
+    const response = await getOrders(params)
     orders.value = response.data
+    totalOrders.value = response.meta.total
+    totalPages.value = Math.ceil(response.meta.total / perPage.value)
     selectedOrders.value = [] // Reset selection after fetching new orders
   } catch (err) {
     error.value = err.message
@@ -77,18 +115,6 @@ const fetchOrders = async (filters = {}) => {
     loading.value = false
   }
 }
-
-onMounted(() => {
-  fetchOrders()
-})
-
-watch(() => activeFilters.value.orderNumber, (newValue) => {
-  if (newValue) {
-    fetchOrders({ orderNumber: newValue })
-  } else {
-    fetchOrders()
-  }
-})
 
 const filteredOrders = computed(() => {
   return orders.value.filter(order => {
@@ -99,9 +125,8 @@ const filteredOrders = computed(() => {
   })
 })
 
-const totalPages = computed(() => Math.ceil(filteredOrders.value.length / itemsPerPage))
-const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage)
-const endIndex = computed(() => startIndex.value + itemsPerPage)
+const startIndex = computed(() => (currentPage.value - 1) * perPage.value + 1)
+const endIndex = computed(() => Math.min(startIndex.value + perPage.value - 1, totalOrders.value))
 
 const handleFilterReset = () => {
   activeFilters.value = {
@@ -112,16 +137,43 @@ const handleFilterReset = () => {
     lastEditDateTo: ''
   }
   selectedStatus.value = 'all'
+  currentPage.value = 1
   fetchOrders()
 }
 
 const handleFilterApply = (filters) => {
   activeFilters.value = filters
-  fetchOrders({ orderNumber: filters.orderNumber })
+  currentPage.value = 1
+  fetchOrders({ 
+    orderNumber: filters.orderNumber,
+    created_date_from: filters.createdDateFrom,
+    created_date_to: filters.createdDateTo,
+    last_edit_date_from: filters.lastEditDateFrom,
+    last_edit_date_to: filters.lastEditDateTo
+  })
 }
 
 const handlePageUpdate = (page) => {
   currentPage.value = page
+  fetchOrders({
+    orderNumber: activeFilters.value.orderNumber,
+    created_date_from: activeFilters.value.createdDateFrom,
+    created_date_to: activeFilters.value.createdDateTo,
+    last_edit_date_from: activeFilters.value.lastEditDateFrom,
+    last_edit_date_to: activeFilters.value.lastEditDateTo
+  })
+}
+
+const handlePerPageUpdate = (size) => {
+  perPage.value = size
+  currentPage.value = 1 // Reset to first page when changing page size
+  fetchOrders({
+    orderNumber: activeFilters.value.orderNumber,
+    created_date_from: activeFilters.value.createdDateFrom,
+    created_date_to: activeFilters.value.createdDateTo,
+    last_edit_date_from: activeFilters.value.lastEditDateFrom,
+    last_edit_date_to: activeFilters.value.lastEditDateTo
+  })
 }
 
 const handleSelectionChange = (selected) => {

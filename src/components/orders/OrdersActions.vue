@@ -88,7 +88,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { 
   ArrowPathIcon,
   ChevronLeftIcon,
@@ -133,10 +133,14 @@ const props = defineProps({
   orders: {
     type: Array,
     required: true
+  },
+  perPage: {
+    type: Number,
+    required: true
   }
 })
 
-const emit = defineEmits(['update:page', 'status-updated'])
+const emit = defineEmits(['update:page', 'status-updated', 'update:per-page'])
 
 const selectedStatus = ref('')
 const loading = ref(false)

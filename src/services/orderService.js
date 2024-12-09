@@ -1,20 +1,52 @@
 import { API_BASE_URL } from './config'
 
-export async function getOrders(filters = {}) {
+export async function getOrders(params = {}) {
   const token = localStorage.getItem('authToken')
   
   if (!token) {
     throw new Error('No authentication token found')
   }
 
-  let url = `${API_BASE_URL}/orders`
+  // Build query parameters
+  const queryParams = new URLSearchParams()
   
-  // Add filters to URL if they exist
-  if (filters.orderIds) {
-    // Convert space-separated IDs to comma-separated format
-    const formattedIds = filters.orderIds.split(' ').filter(id => id).join(',')
-    url += `?orderIds=${formattedIds}`
+  if (params.page) {
+    queryParams.append('page', params.page)
   }
+  
+  if (params.per_page) {
+    queryParams.append('per_page', params.per_page)
+  }
+  
+  if (params.orderNumber) {
+    // Convert space-separated IDs to comma-separated format
+    const formattedIds = params.orderNumber.trim().split(' ').filter(id => id).join(',')
+    if (formattedIds) {
+      queryParams.append('ordersId', formattedIds)
+    }
+  }
+
+  if (params.created_date_from) {
+    queryParams.append('created_date_from', params.created_date_from)
+  }
+
+  if (params.created_date_to) {
+    queryParams.append('created_date_to', params.created_date_to)
+  }
+
+  if (params.last_edit_date_from) {
+    queryParams.append('last_edit_date_from', params.last_edit_date_from)
+  }
+
+  if (params.last_edit_date_to) {
+    queryParams.append('last_edit_date_to', params.last_edit_date_to)
+  }
+
+  if (params.store) {
+    queryParams.append('store', params.store)
+  }
+
+  const url = `${API_BASE_URL}/orders${queryParams.toString() ? `?${queryParams.toString()}` : ''}`
 
   const response = await fetch(url, {
     method: 'GET',

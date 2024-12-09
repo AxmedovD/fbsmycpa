@@ -5,6 +5,7 @@ import { useRouter } from 'vue-router'
 const user = ref(null)
 const loading = ref(true)
 const error = ref(null)
+const userStore = ref(null)
 
 export function useUser() {
   const router = useRouter()
@@ -15,6 +16,7 @@ export function useUser() {
       error.value = null
       const response = await getUserProfile()
       user.value = response
+      userStore.value = response.store
     } catch (err) {
       error.value = 'Failed to load user profile'
       console.error('Error fetching user:', err)
@@ -36,6 +38,7 @@ export function useUser() {
     user,
     loading,
     error,
-    fetchUser
+    fetchUser,
+    userStore
   }
 }

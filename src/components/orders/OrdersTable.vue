@@ -1,10 +1,10 @@
 <template>
-  <div class="flex-1 bg-white dark:bg-gray-800 shadow rounded-lg">
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+  <div class="flex-1 bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden flex flex-col">
+    <div class="overflow-x-auto flex-1">
+      <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead class="bg-gray-50 dark:bg-gray-700">
           <tr>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
               <div class="flex items-center">
                 <input
                   type="checkbox"
@@ -15,12 +15,12 @@
                 <span class="ml-2">Order ID</span>
               </div>
             </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created At</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Customer</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Items</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Created At</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Customer</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Location</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Status</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Items</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Total</th>
           </tr>
         </thead>
         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -71,38 +71,57 @@
             </td>
           </tr>
         </tbody>
-        <tfoot class="bg-gray-50 dark:bg-gray-700">
-          <tr>
-            <td colspan="7" class="px-6 py-4">
-              <div class="flex justify-between items-center text-sm">
-                <div class="flex items-center space-x-4">
-                  <div v-if="selectedOrders.length > 0" class="flex items-center space-x-4">
-                    <span class="font-medium text-gray-700 dark:text-gray-300">
-                      Selected: {{ selectedOrders.length }}
-                    </span>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">
-                      Selected Total: {{ formatPrice(selectedOrdersTotal) }}
-                    </span>
-                  </div>
-                  <div class="w-px h-4 bg-gray-300 dark:bg-gray-600" v-if="selectedOrders.length > 0"></div>
-                  <span class="font-medium text-gray-700 dark:text-gray-300">
-                    Total Orders: {{ orders.length }}
-                  </span>
-                  <span class="font-medium text-gray-700 dark:text-gray-300">
-                    Total: {{ formatPrice(totalPrice) }}
-                  </span>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </tfoot>
       </table>
+    </div>
+    
+    <!-- Fixed Footer -->
+    <div class="bg-gray-50 dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+      <div class="px-6 py-4">
+        <div class="flex justify-between items-center text-sm">
+          <div class="flex items-center space-x-4">
+            <div v-if="selectedOrders.length > 0" class="flex items-center space-x-4">
+              <span class="font-medium text-gray-700 dark:text-gray-300">
+                Selected: {{ selectedOrders.length }}
+              </span>
+              <span class="font-medium text-gray-700 dark:text-gray-300">
+                Selected Total: {{ formatPrice(selectedOrdersTotal) }}
+              </span>
+            </div>
+            <div class="w-px h-4 bg-gray-300 dark:bg-gray-600" v-if="selectedOrders.length > 0"></div>
+            <span class="font-medium text-gray-700 dark:text-gray-300">
+              Total Orders: {{ orders.length }}
+            </span>
+            <span class="font-medium text-gray-700 dark:text-gray-300">
+              Total: {{ formatPrice(totalPrice) }}
+            </span>
+            
+            <!-- Per Page Selection -->
+            <div class="flex items-center space-x-2 ml-4">
+              <span class="text-gray-600 dark:text-gray-400">Show:</span>
+              <div class="flex items-center space-x-2">
+                <button
+                  v-for="size in pageSizes"
+                  :key="size"
+                  @click="updatePerPage(size)"
+                  class="px-2 py-1 rounded transition-colors text-sm"
+                  :class="perPage === size ? 
+                    'bg-blue-600 text-white' : 
+                    'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'"
+                >
+                  {{ size }}
+                  <span class="text-xs ml-1 opacity-60">({{ getShortcut(size) }})</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { formatPrice } from '@/utils/formatters'
 import { getStatusConfig } from '@/utils/orderStatuses'
 
@@ -111,12 +130,17 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
+  },
+  perPage: {
+    type: Number,
+    required: true
   }
 })
 
-const emit = defineEmits(['selection-change'])
+const emit = defineEmits(['selection-change', 'update:per-page'])
 
 const selectedOrders = ref([])
+const pageSizes = [20, 50, 100]
 
 const totalPrice = computed(() => {
   return props.orders.reduce((sum, order) => sum + parseFloat(order.totalSumm), 0)
@@ -153,5 +177,16 @@ const toggleOrder = (orderId) => {
   emit('selection-change', [...selectedOrders.value])
 }
 
-// Remove the watch as we're now emitting directly in the toggle functions
+const updatePerPage = (size) => {
+  emit('update:per-page', size)
+}
+
+const getShortcut = (size) => {
+  switch (size) {
+    case 20: return '⌘1'
+    case 50: return '⌘2'
+    case 100: return '⌘3'
+    default: return ''
+  }
+}
 </script>

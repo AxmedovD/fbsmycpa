@@ -132,6 +132,16 @@ const resetFilters = () => {
 }
 
 const applyFilters = () => {
-  emit('apply', filters.value)
+  // Format order numbers: trim whitespace and ensure single spaces between IDs
+  const formattedOrderNumber = filters.value.orderNumber
+    .trim()
+    .replace(/\s+/g, ' ')
+
+  const filtersToApply = {
+    ...filters.value,
+    orderNumber: formattedOrderNumber
+  }
+
+  emit('apply', filtersToApply)
 }
 </script>
