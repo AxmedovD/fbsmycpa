@@ -74,12 +74,9 @@ const handleSubmit = async () => {
     loading.value = true
     error.value = ''
     
-    const response = await login(email.value, password.value)
+    await login(email.value, password.value)
     
-    // Store the token in localStorage
-    localStorage.setItem('authToken', response.token)
-    
-    // If remember me is checked, you might want to store additional data
+    // If remember me is checked, store email
     if (rememberMe.value) {
       localStorage.setItem('rememberedEmail', email.value)
     }

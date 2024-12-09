@@ -19,7 +19,7 @@
       
       <div class="space-y-2">
         <button 
-          v-for="status in Object.keys(statusConfig)" 
+          v-for="status in Object.keys(ORDER_STATUSES)" 
           :key="status"
           class="w-full text-left py-2 px-3 rounded-md text-sm flex items-center justify-between transition-colors duration-150"
           :class="[
@@ -28,103 +28,46 @@
           @click="selectStatus(status)"
         >
           <div class="flex items-center">
-            <component :is="getStatusIcon(status)" class="h-5 w-5 mr-2" :class="getStatusIconColor(status)" />
-            <span>{{ status }}</span>
+            <component 
+              :is="ORDER_STATUSES[status].icon" 
+              class="h-5 w-5 mr-2" 
+              :class="ORDER_STATUSES[status].iconColor" 
+            />
+            <span>{{ ORDER_STATUSES[status].label }}</span>
           </div>
-          <span class="font-medium" :class="getStatusTextColor(status)">{{ getStatusCount(status) }}</span>
+          <span 
+            class="font-medium" 
+            :class="ORDER_STATUSES[status].textColor"
+          >
+            {{ getStatusCount(status) }}
+          </span>
         </button>
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import { 
-  InboxStackIcon,
-  ClockIcon,
-  CheckCircleIcon,
-  TruckIcon,
-  XCircleIcon,
-  CheckIcon,
-  ArrowUturnLeftIcon,
-  CurrencyDollarIcon
-} from '@heroicons/vue/24/outline'
+<script setup>
+import { ref } from 'vue'
+import { InboxStackIcon } from '@heroicons/vue/24/outline'
+import { ORDER_STATUSES } from '@/utils/orderStatuses'
 
-const props = defineProps<{
-  orders: Array<{
-    id: string
-    status: string
-    [key: string]: any
-  }>
-}>()
+const props = defineProps({
+  orders: {
+    type: Array,
+    required: true
+  }
+})
 
-const emit = defineEmits<{
-  (e: 'update:status', status: string): void
-}>()
+const emit = defineEmits(['update:status'])
 
 const selectedStatus = ref('all')
 
-const statusConfig = {
-  'New': {
-    icon: ClockIcon,
-    iconColor: 'text-yellow-500',
-    textColor: 'text-yellow-600 dark:text-yellow-400'
-  },
-  'Accept': {
-    icon: CheckCircleIcon,
-    iconColor: 'text-blue-500',
-    textColor: 'text-blue-600 dark:text-blue-400'
-  },
-  'Send': {
-    icon: TruckIcon,
-    iconColor: 'text-purple-500',
-    textColor: 'text-purple-600 dark:text-purple-400'
-  },
-  'Delivering': {
-    icon: TruckIcon,
-    iconColor: 'text-indigo-500',
-    textColor: 'text-indigo-600 dark:text-indigo-400'
-  },
-  'Cancel': {
-    icon: XCircleIcon,
-    iconColor: 'text-red-500',
-    textColor: 'text-red-600 dark:text-red-400'
-  },
-  'Delivered': {
-    icon: CheckIcon,
-    iconColor: 'text-green-500',
-    textColor: 'text-green-600 dark:text-green-400'
-  },
-  'Back': {
-    icon: ArrowUturnLeftIcon,
-    iconColor: 'text-orange-500',
-    textColor: 'text-orange-600 dark:text-orange-400'
-  },
-  'Sold': {
-    icon: CurrencyDollarIcon,
-    iconColor: 'text-emerald-500',
-    textColor: 'text-emerald-600 dark:text-emerald-400'
-  }
+const getStatusCount = (status) => {
+  return props.orders.filter(order => order.status.toLowerCase() === status).length
 }
 
-const getStatusCount = (status: string) => {
-  return props.orders.filter(order => order.status === status).length
-}
-
-const getStatusIcon = (status: string) => {
-  return statusConfig[status as keyof typeof statusConfig].icon
-}
-
-const getStatusIconColor = (status: string) => {
-  return statusConfig[status as keyof typeof statusConfig].iconColor
-}
-
-const getStatusTextColor = (status: string) => {
-  return statusConfig[status as keyof typeof statusConfig].textColor
-}
-
-const selectStatus = (status: string) => {
+const selectStatus = (status) => {
   selectedStatus.value = status
   emit('update:status', status)
 }

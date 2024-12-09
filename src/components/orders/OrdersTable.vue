@@ -1,14 +1,5 @@
 <template>
   <div class="flex-1 bg-white dark:bg-gray-800 shadow rounded-lg">
-    <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Orders</h3>
-        <Button variant="primary" class="flex items-center">
-          <PlusIcon class="h-4 w-4 mr-1" />
-          New Order
-        </Button>
-      </div>
-    </div>
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead class="bg-gray-50 dark:bg-gray-700">
@@ -24,50 +15,65 @@
                 <span class="ml-2">Order ID</span>
               </div>
             </th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Created At</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Customer</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Items</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Price</th>
-            <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Total</th>
           </tr>
         </thead>
         <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-          <tr v-for="order in paginatedOrders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
+          <tr v-for="order in orders" :key="order.id" class="hover:bg-gray-50 dark:hover:bg-gray-700">
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex items-center">
                 <input
                   type="checkbox"
                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  :checked="selectedOrders.includes(order.id)"
-                  @change="toggleOrder(order.id)"
+                  :checked="selectedOrders.includes(order.orderId)"
+                  @change="toggleOrder(order.orderId)"
                 />
-                <span class="ml-2 text-sm font-medium text-gray-900 dark:text-white">#{{ order.id }}</span>
+                <span class="ml-2 text-sm font-medium text-gray-900 dark:text-white">{{ order.orderId }}</span>
               </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+              {{ new Date(order.createdAt).toLocaleString() }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex flex-col">
-                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ order.customer }}</div>
+                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ order.name }}</div>
                 <div class="text-sm text-gray-500 dark:text-gray-400">{{ order.phone }}</div>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                :class="getStatusClass(order.status)">
+              <div class="flex flex-col">
+                <div class="text-sm text-gray-900 dark:text-white">{{ order.region }}, {{ order.city }}</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">{{ order.adress }}</div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span 
+                class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                :class="getStatusConfig(order.status).bgColor"
+              >
                 {{ order.status }}
               </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ order.items }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{{ formatPrice(order.price) }}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <button class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300">
-                <PencilSquareIcon class="h-5 w-5" />
-              </button>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="flex flex-col space-y-1">
+                <div v-for="item in order.items" :key="item.id" class="text-sm text-gray-500 dark:text-gray-300">
+                  {{ item.product }} ({{ item.sku }}) x{{ item.quantity }} - {{ formatPrice(item.sellPrice) }}
+                </div>
+              </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+              {{ formatPrice(order.totalSumm) }}
             </td>
           </tr>
         </tbody>
         <tfoot class="bg-gray-50 dark:bg-gray-700">
           <tr>
-            <td colspan="6" class="px-6 py-4">
+            <td colspan="7" class="px-6 py-4">
               <div class="flex justify-between items-center text-sm">
                 <div class="flex items-center space-x-4">
                   <div v-if="selectedOrders.length > 0" class="flex items-center space-x-4">
@@ -80,7 +86,7 @@
                   </div>
                   <div class="w-px h-4 bg-gray-300 dark:bg-gray-600" v-if="selectedOrders.length > 0"></div>
                   <span class="font-medium text-gray-700 dark:text-gray-300">
-                    Total Orders: {{ paginatedOrders.length }}
+                    Total Orders: {{ orders.length }}
                   </span>
                   <span class="font-medium text-gray-700 dark:text-gray-300">
                     Total: {{ formatPrice(totalPrice) }}
@@ -95,87 +101,57 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import { PencilSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
-import Button from '@/components/ui/Button.vue'
+<script setup>
+import { ref, computed, watch } from 'vue'
+import { formatPrice } from '@/utils/formatters'
+import { getStatusConfig } from '@/utils/orderStatuses'
 
-const props = defineProps<{
-  orders: Array<{
-    id: string
-    customer: string
-    status: string
-    items: string
-    phone: string
-    price: number
-  }>
-}>()
-
-const selectedOrders = ref<string[]>([])
-const currentPage = ref(1)
-const itemsPerPage = 10
-
-const totalPages = computed(() => Math.ceil(props.orders.length / itemsPerPage))
-const startIndex = computed(() => (currentPage.value - 1) * itemsPerPage)
-const endIndex = computed(() => startIndex.value + itemsPerPage)
-
-const paginatedOrders = computed(() => {
-  return props.orders.slice(startIndex.value, endIndex.value)
+const props = defineProps({
+  orders: {
+    type: Array,
+    required: true,
+    default: () => []
+  }
 })
 
+const emit = defineEmits(['selection-change'])
+
+const selectedOrders = ref([])
+
 const totalPrice = computed(() => {
-  return paginatedOrders.value.reduce((sum, order) => sum + order.price, 0)
+  return props.orders.reduce((sum, order) => sum + parseFloat(order.totalSumm), 0)
 })
 
 const selectedOrdersTotal = computed(() => {
-  return paginatedOrders.value
-    .filter(order => selectedOrders.value.includes(order.id))
-    .reduce((sum, order) => sum + order.price, 0)
+  return props.orders
+    .filter(order => selectedOrders.value.includes(order.orderId))
+    .reduce((sum, order) => sum + parseFloat(order.totalSumm), 0)
 })
 
 const isAllSelected = computed(() => {
-  return paginatedOrders.value.length > 0 && 
-    paginatedOrders.value.every(order => selectedOrders.value.includes(order.id))
+  return props.orders.length > 0 && 
+    props.orders.every(order => selectedOrders.value.includes(order.orderId))
 })
 
-const toggleAllOrders = (event: Event) => {
-  const checkbox = event.target as HTMLInputElement
+const toggleAllOrders = (event) => {
+  const checkbox = event.target
   if (checkbox.checked) {
-    selectedOrders.value = [...new Set([...selectedOrders.value, ...paginatedOrders.value.map(order => order.id)])]
+    selectedOrders.value = props.orders.map(order => order.orderId)
   } else {
-    selectedOrders.value = selectedOrders.value.filter(id => 
-      !paginatedOrders.value.find(order => order.id === id)
-    )
+    selectedOrders.value = []
   }
+  emit('selection-change', selectedOrders.value)
 }
 
-const toggleOrder = (orderId: string) => {
+const toggleOrder = (orderId) => {
   const index = selectedOrders.value.indexOf(orderId)
   if (index === -1) {
     selectedOrders.value.push(orderId)
   } else {
     selectedOrders.value.splice(index, 1)
   }
+  emit('selection-change', [...selectedOrders.value])
 }
 
-const formatPrice = (price: number) => {
-  return new Intl.NumberFormat('uz-UZ', {
-    style: 'currency',
-    currency: 'UZS'
-  }).format(price)
-}
-
-const getStatusClass = (status: string) => {
-  const classes = {
-    'New': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    'Accept': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    'Send': 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-    'Delivering': 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
-    'Cancel': 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-    'Delivered': 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    'Back': 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-    'Sold': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
-  }
-  return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-}
+// Remove the watch as we're now emitting directly in the toggle functions
 </script>

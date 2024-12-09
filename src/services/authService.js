@@ -1,20 +1,28 @@
-const API_BASE_URL = 'https://api.mycpa.uz/api';
+import { API_BASE_URL } from './config'
 
 // Function to handle user login
 export async function login(email, password) {
   const response = await fetch(`${API_BASE_URL}/login`, {
     method: 'POST',
     headers: {
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ email, password }),
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    throw new Error('Login failed');
+    throw new Error(data.message || 'Login failed');
   }
 
-  return response.json();
+  // Store the token from the response data
+  if (data.data && data.data.token) {
+    localStorage.setItem('authToken', data.data.token);
+  }
+
+  return data;
 }
 
 // Function to handle user registration
@@ -22,6 +30,7 @@ export async function register(name, email, password, passwordConfirmation, stor
   const response = await fetch(`${API_BASE_URL}/register`, {
     method: 'POST',
     headers: {
+      'Accept': 'application/json',
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -33,9 +42,11 @@ export async function register(name, email, password, passwordConfirmation, stor
     }),
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    throw new Error('Registration failed');
+    throw new Error(data.message || 'Registration failed');
   }
 
-  return response.json();
+  return data;
 }

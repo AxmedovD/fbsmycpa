@@ -35,18 +35,25 @@
                 alt=""
               />
             </button>
-            <div
-              v-if="isProfileOpen"
-              class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5"
+            
+            <transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
             >
-              <a
-                href="#"
-                class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600"
-                @click="logout"
+              <div
+                v-if="isProfileOpen"
+                class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5"
               >
-                Sign out
-              </a>
-            </div>
+                <UserProfile 
+                  :user="user"
+                  @logout="handleLogout"
+                />
+              </div>
+            </transition>
           </div>
         </div>
       </div>
@@ -59,6 +66,8 @@ import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from '@heroicons/vue/24/outline'
 import { useDarkMode } from '@/composables/useDarkMode'
+import { useUser } from '@/composables/useUser'
+import UserProfile from '@/components/user/UserProfile.vue'
 
 const props = defineProps({
   isSidebarOpen: Boolean
@@ -70,12 +79,14 @@ const route = useRoute()
 const router = useRouter()
 const isProfileOpen = ref(false)
 const { isDarkMode, toggleDarkMode } = useDarkMode()
+const { user } = useUser()
 
 const pageTitle = computed(() => {
   return route.name || 'Dashboard'
 })
 
-const logout = () => {
+const handleLogout = () => {
+  localStorage.removeItem('authToken')
   router.push('/auth/login')
 }
 </script>

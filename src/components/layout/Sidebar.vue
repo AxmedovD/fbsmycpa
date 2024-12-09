@@ -43,7 +43,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { HomeIcon, ShoppingCartIcon, UsersIcon, UserGroupIcon } from '@heroicons/vue/24/outline'
+import { HomeIcon, ShoppingCartIcon } from '@heroicons/vue/24/outline'
 
 defineProps({
   isOpen: Boolean,
@@ -56,9 +56,7 @@ const route = useRoute()
 
 const menuItems = [
   { name: 'Dashboard', path: '/dashboard', icon: HomeIcon },
-  { name: 'Orders', path: '/orders', icon: ShoppingCartIcon },
-  { name: 'Clients', path: '/clients', icon: UsersIcon },
-  { name: 'Users', path: '/users', icon: UserGroupIcon }
+  { name: 'Orders', path: '/orders', icon: ShoppingCartIcon }
 ]
 
 const isActive = (path) => route.path === path
