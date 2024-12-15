@@ -61,6 +61,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue'
 import Input from '@/components/ui/Input.vue'
 import Button from '@/components/ui/Button.vue'
 import { login } from '@/services/authService'
+import { useUser } from '@/composables/useUser'
 
 const router = useRouter()
 const email = ref('')
@@ -68,20 +69,23 @@ const password = ref('')
 const rememberMe = ref(false)
 const error = ref('')
 const loading = ref(false)
+const { fetchUser, clearUserData } = useUser()
 
 const handleSubmit = async () => {
   try {
     loading.value = true
     error.value = ''
     
-    await login(email.value, password.value)
+    // Clear any existing user data before login
+    clearUserData()
     
-    // If remember me is checked, store email
+    await login(email.value, password.value)
+    await fetchUser()
+    
     if (rememberMe.value) {
       localStorage.setItem('rememberedEmail', email.value)
     }
     
-    // Redirect to dashboard
     router.push('/dashboard')
   } catch (err) {
     error.value = err.message || 'Failed to login. Please try again.'

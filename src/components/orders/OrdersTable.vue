@@ -17,7 +17,7 @@
             </th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Created At</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Customer</th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Location</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Address</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Status</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Items</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Total</th>
@@ -37,7 +37,7 @@
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              {{ new Date(order.createdAt).toLocaleString() }}
+              {{ formatDate(order.createdAt) }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex flex-col">
@@ -45,10 +45,10 @@
                 <div class="text-sm text-gray-500 dark:text-gray-400">{{ order.phone }}</div>
               </div>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex flex-col">
-                <div class="text-sm text-gray-900 dark:text-white">{{ order.region }}, {{ order.city }}</div>
-                <div class="text-sm text-gray-500 dark:text-gray-400">{{ order.adress }}</div>
+            <td class="px-6 py-4">
+              <div class="max-w-xs">
+                <div class="text-sm text-gray-900 dark:text-white whitespace-nowrap">{{ order.region }}, {{ order.city }}</div>
+                <div class="text-sm text-gray-500 dark:text-gray-400 break-words max-w-[300px]">{{ order.adress }}</div>
               </div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
@@ -94,25 +94,6 @@
             <span class="font-medium text-gray-700 dark:text-gray-300">
               Total: {{ formatPrice(totalPrice) }}
             </span>
-            
-            <!-- Per Page Selection -->
-            <div class="flex items-center space-x-2 ml-4">
-              <span class="text-gray-600 dark:text-gray-400">Show:</span>
-              <div class="flex items-center space-x-2">
-                <button
-                  v-for="size in pageSizes"
-                  :key="size"
-                  @click="updatePerPage(size)"
-                  class="px-2 py-1 rounded transition-colors text-sm"
-                  :class="perPage === size ? 
-                    'bg-blue-600 text-white' : 
-                    'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600'"
-                >
-                  {{ size }}
-                  <span class="text-xs ml-1 opacity-60">({{ getShortcut(size) }})</span>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -130,17 +111,24 @@ const props = defineProps({
     type: Array,
     required: true,
     default: () => []
-  },
-  perPage: {
-    type: Number,
-    required: true
   }
 })
 
-const emit = defineEmits(['selection-change', 'update:per-page'])
+const emit = defineEmits(['selection-change'])
 
 const selectedOrders = ref([])
-const pageSizes = [20, 50, 100]
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  return date.toLocaleString('en-GB', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  })
+}
 
 const totalPrice = computed(() => {
   return props.orders.reduce((sum, order) => sum + parseFloat(order.totalSumm), 0)
@@ -175,18 +163,5 @@ const toggleOrder = (orderId) => {
     selectedOrders.value.splice(index, 1)
   }
   emit('selection-change', [...selectedOrders.value])
-}
-
-const updatePerPage = (size) => {
-  emit('update:per-page', size)
-}
-
-const getShortcut = (size) => {
-  switch (size) {
-    case 20: return '⌘1'
-    case 50: return '⌘2'
-    case 100: return '⌘3'
-    default: return ''
-  }
 }
 </script>

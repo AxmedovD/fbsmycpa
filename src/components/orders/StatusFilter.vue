@@ -14,7 +14,7 @@
           <InboxStackIcon class="h-5 w-5 mr-2" />
           <span>All Orders</span>
         </div>
-        <span class="text-sm font-medium">{{ orders.length }}</span>
+        <span class="text-sm font-medium">{{ totalOrders }}</span>
       </button>
       
       <div class="space-y-2">
@@ -53,8 +53,16 @@ import { InboxStackIcon } from '@heroicons/vue/24/outline'
 import { ORDER_STATUSES } from '@/utils/orderStatuses'
 
 const props = defineProps({
-  orders: {
-    type: Array,
+  statusCounts: {
+    type: Object,
+    required: true,
+    default: () => ({
+      filtered: {},
+      total: {}
+    })
+  },
+  totalOrders: {
+    type: Number,
     required: true
   }
 })
@@ -64,7 +72,11 @@ const emit = defineEmits(['update:status'])
 const selectedStatus = ref('all')
 
 const getStatusCount = (status) => {
-  return props.orders.filter(order => order.status.toLowerCase() === status).length
+  // Use filtered counts when a filter is applied, otherwise use total counts
+  const counts = Object.keys(props.statusCounts.filtered).length > 0 
+    ? props.statusCounts.filtered 
+    : props.statusCounts.total
+  return counts[status] || 0
 }
 
 const selectStatus = (status) => {

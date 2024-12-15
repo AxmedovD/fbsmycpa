@@ -1,5 +1,5 @@
 <template>
-  <header class="bg-white dark:bg-gray-800 shadow">
+  <header class="bg-white dark:bg-gray-800 shadow relative z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16 items-center">
         <div class="flex items-center">
@@ -13,6 +13,7 @@
           </button>
           <h1 class="ml-4 text-2xl font-semibold text-gray-900 dark:text-white">{{ pageTitle }}</h1>
         </div>
+        
         <div class="flex items-center space-x-4">
           <!-- Dark mode toggle -->
           <button
@@ -24,9 +25,9 @@
           </button>
           
           <!-- Profile dropdown -->
-          <div class="relative">
+          <div class="relative" ref="profileDropdown">
             <button
-              @click="isProfileOpen = !isProfileOpen"
+              @click="toggleProfile"
               class="flex items-center max-w-xs rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               <img
@@ -46,7 +47,7 @@
             >
               <div
                 v-if="isProfileOpen"
-                class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5"
+                class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg z-50"
               >
                 <UserProfile 
                   :user="user"
@@ -62,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Bars3Icon, XMarkIcon, SunIcon, MoonIcon } from '@heroicons/vue/24/outline'
 import { useDarkMode } from '@/composables/useDarkMode'
@@ -78,15 +79,39 @@ defineEmits(['toggle-sidebar'])
 const route = useRoute()
 const router = useRouter()
 const isProfileOpen = ref(false)
+const profileDropdown = ref(null)
 const { isDarkMode, toggleDarkMode } = useDarkMode()
-const { user } = useUser()
+const { user, fetchUser } = useUser()
 
 const pageTitle = computed(() => {
   return route.name || 'Dashboard'
 })
 
+const toggleProfile = () => {
+  isProfileOpen.value = !isProfileOpen.value
+}
+
+const closeProfile = (event) => {
+  if (profileDropdown.value && !profileDropdown.value.contains(event.target)) {
+    isProfileOpen.value = false
+  }
+}
+
 const handleLogout = () => {
-  localStorage.removeItem('authToken')
+  isProfileOpen.value = false
   router.push('/auth/login')
 }
+
+// Fetch user data when component mounts
+onMounted(() => {
+  document.addEventListener('click', closeProfile)
+  const token = localStorage.getItem('authToken')
+  if (token) {
+    fetchUser()
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeProfile)
+})
 </script>

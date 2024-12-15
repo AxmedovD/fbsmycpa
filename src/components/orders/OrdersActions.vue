@@ -1,6 +1,12 @@
 <template>
-  <div class="mt-6">
-    <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
+  <div 
+    class="transition-all duration-300 ease-in-out"
+    :class="[
+      'bg-white dark:bg-gray-800 shadow-lg border-t border-gray-200 dark:border-gray-700',
+      selectedCount > 0 ? 'fixed bottom-0 left-0 right-0 z-30' : 'mt-6'
+    ]"
+  >
+    <div class="max-w-7xl mx-auto">
       <div class="px-6 py-4">
         <div class="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           <!-- Export Button -->
@@ -84,11 +90,12 @@
         </div>
       </div>
     </div>
+    <!-- Add padding at the bottom when fixed to prevent content from being hidden -->
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
 import { 
   ArrowPathIcon,
   ChevronLeftIcon,
@@ -98,8 +105,7 @@ import {
 } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
 import { ORDER_STATUSES } from '@/utils/orderStatuses'
-import { updateOrdersStatus } from '@/services/orderService'
-import { exportToExcel } from '@/utils/exportUtils'
+import { useOrdersActions } from '@/composables/useOrdersActions'
 
 const props = defineProps({
   currentPage: {
@@ -142,47 +148,12 @@ const props = defineProps({
 
 const emit = defineEmits(['update:page', 'status-updated', 'update:per-page'])
 
-const selectedStatus = ref('')
-const loading = ref(false)
-
-// Pagination logic
-const displayedPages = computed(() => {
-  const pages = []
-  const maxDisplayed = 5
-  let start = Math.max(1, props.currentPage - Math.floor(maxDisplayed / 2))
-  let end = Math.min(props.totalPages, start + maxDisplayed - 1)
-
-  if (end - start + 1 < maxDisplayed) {
-    start = Math.max(1, end - maxDisplayed + 1)
-  }
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
-
-  return pages
-})
-
-const updatePage = (page) => {
-  emit('update:page', page)
-}
-
-const updateStatus = async () => {
-  if (!selectedStatus.value || props.selectedOrders.length === 0) return
-
-  try {
-    loading.value = true
-    await updateOrdersStatus(props.selectedOrders, selectedStatus.value)
-    emit('status-updated')
-    selectedStatus.value = ''
-  } catch (error) {
-    console.error('Failed to update status:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const handleExport = () => {
-  exportToExcel(props.orders, props.selectedOrders)
-}
+const {
+  selectedStatus,
+  loading,
+  displayedPages,
+  updatePage,
+  updateStatus,
+  handleExport
+} = useOrdersActions(props, emit)
 </script>
