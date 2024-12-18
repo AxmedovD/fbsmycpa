@@ -6,7 +6,9 @@ import {
   CheckIcon,
   ArrowUturnLeftIcon,
   CurrencyDollarIcon,
-  DocumentCheckIcon
+  DocumentCheckIcon,
+  ExclamationTriangleIcon,
+  ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 
 export const ORDER_STATUSES = {
@@ -30,6 +32,20 @@ export const ORDER_STATUSES = {
     iconColor: 'text-purple-500',
     textColor: 'text-purple-600 dark:text-purple-400',
     bgColor: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+  },
+  'not-send': {
+    label: 'Not Send',
+    icon: ExclamationTriangleIcon,
+    iconColor: 'text-orange-500',
+    textColor: 'text-orange-600 dark:text-orange-400',
+    bgColor: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+  },
+  delivering: {
+    label: 'Delivering',
+    icon: ArrowPathIcon,
+    iconColor: 'text-indigo-500',
+    textColor: 'text-indigo-600 dark:text-indigo-400',
+    bgColor: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200'
   },
   cancel: {
     label: 'Cancel',
