@@ -7,15 +7,29 @@
       <div class="lg:pl-64"> <!-- Match sidebar width -->
         <div class="py-4">
           <div class="flex items-center justify-between">
-            <!-- Export Button -->
-            <Button 
-              variant="secondary"
-              class="flex items-center"
-              @click="handleExport"
-            >
-              <ArrowDownTrayIcon class="h-4 w-4 mr-1.5" />
-              Export Selected ({{ selectedCount }})
-            </Button>
+            <div class="flex items-center space-x-2">
+              <!-- Export Button -->
+              <Button 
+                variant="secondary"
+                class="flex items-center"
+                @click="handleExport"
+              >
+                <ArrowDownTrayIcon class="h-4 w-4 mr-1.5" />
+                Export Selected ({{ selectedCount }})
+              </Button>
+
+              <!-- Print Label Button - Only show for 'send' status orders -->
+              <Button
+                v-if="hasSendStatusOrders"
+                variant="secondary"
+                class="flex items-center"
+                @click="handlePrintLabel"
+                :disabled="printingLabel"
+              >
+                <PrinterIcon class="h-4 w-4 mr-1.5" />
+                {{ printingLabel ? 'Opening...' : 'Print Label' }}
+              </Button>
+            </div>
 
             <!-- Bulk Status Update -->
             <div class="flex items-center space-x-2">
@@ -56,16 +70,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { 
   ArrowPathIcon,
   ArrowDownTrayIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  PrinterIcon
 } from '@heroicons/vue/24/outline'
 import Button from '@/components/ui/Button.vue'
 import { ORDER_STATUSES } from '@/utils/orderStatuses'
 import { useStatusUpdate } from '@/composables/useStatusUpdate'
 import { exportToExcel } from '@/utils/exportUtils'
+import { useCourierLabel } from '@/composables/useCourierLabel'
 
 const props = defineProps({
   selectedCount: {
@@ -85,6 +101,10 @@ const props = defineProps({
 const emit = defineEmits(['status-updated'])
 
 const { selectedStatus, loading, updateStatus } = useStatusUpdate(props, emit)
+const { printingLabel, hasSendStatusOrders, handlePrintLabel } = useCourierLabel(
+  computed(() => props.orders),
+  computed(() => props.selectedOrders)
+)
 
 const handleExport = () => {
   exportToExcel(props.orders, props.selectedOrders)
