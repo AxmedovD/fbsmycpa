@@ -1,7 +1,18 @@
 <template>
-  <div class="bg-white dark:bg-gray-800 shadow rounded-lg w-64 flex-shrink-0">
-    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200">Order Status</h3>
+  <div class="bg-white dark:bg-gray-800 shadow rounded-lg w-64 flex-shrink-0 h-full">
+    <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+      <h3 class="text-sm font-medium text-gray-700 dark:text-gray-200">
+        Order Status
+        <span v-if="hasActiveFilters" class="text-xs text-gray-500 dark:text-gray-400 ml-1">
+          (Filtered)
+        </span>
+      </h3>
+      <button 
+        class="lg:hidden text-gray-400 hover:text-gray-500 focus:outline-none"
+        @click="$emit('close')"
+      >
+        <XMarkIcon class="h-5 w-5" />
+      </button>
     </div>
     
     <div class="p-4">
@@ -14,7 +25,7 @@
           <InboxStackIcon class="h-5 w-5 mr-2" />
           <span>All Orders</span>
         </div>
-        <span class="text-sm font-medium">{{ totalOrders }}</span>
+        <span class="text-sm font-medium">{{ hasActiveFilters ? filteredTotal : totalOrders }}</span>
       </button>
       
       <div class="space-y-2">
@@ -49,34 +60,34 @@
 
 <script setup>
 import { ref } from 'vue'
-import { InboxStackIcon } from '@heroicons/vue/24/outline'
+import { InboxStackIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import { ORDER_STATUSES } from '@/utils/orderStatuses'
 
 const props = defineProps({
   statusCounts: {
     type: Object,
-    required: true,
-    default: () => ({
-      filtered: {},
-      total: {}
-    })
+    required: true
   },
   totalOrders: {
     type: Number,
     required: true
+  },
+  filteredTotal: {
+    type: Number,
+    required: true
+  },
+  hasActiveFilters: {
+    type: Boolean,
+    required: true
   }
 })
 
-const emit = defineEmits(['update:status'])
+const emit = defineEmits(['update:status', 'close'])
 
 const selectedStatus = ref('all')
 
 const getStatusCount = (status) => {
-  // Use filtered counts when a filter is applied, otherwise use total counts
-  const counts = Object.keys(props.statusCounts.filtered).length > 0 
-    ? props.statusCounts.filtered 
-    : props.statusCounts.total
-  return counts[status] || 0
+  return props.statusCounts[status] || 0
 }
 
 const selectStatus = (status) => {

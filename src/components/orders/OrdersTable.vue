@@ -1,7 +1,7 @@
 <template>
   <div class="flex-1 bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden flex flex-col">
     <div class="overflow-x-auto flex-1">
-      <table class="w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
         <thead class="bg-gray-50 dark:bg-gray-700">
           <tr>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">
@@ -15,10 +15,11 @@
                 <span class="ml-2">Order ID</span>
               </div>
             </th>
-            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Created At</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Customer</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Address</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Status</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Created At</th>
+            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Last Edit</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Items</th>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider whitespace-nowrap">Total</th>
           </tr>
@@ -35,9 +36,6 @@
                 />
                 <span class="ml-2 text-sm font-medium text-gray-900 dark:text-white">{{ order.orderId }}</span>
               </div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-              {{ formatDate(order.createdAt) }}
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex flex-col">
@@ -59,6 +57,12 @@
                 {{ order.status }}
               </span>
             </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 hidden md:table-cell">
+              {{ formatDate(order.createdAt) }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300 hidden md:table-cell">
+              {{ formatDate(order.updatedAt) }}
+            </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <div class="flex flex-col space-y-1">
                 <div v-for="item in order.items" :key="item.id" class="text-sm text-gray-500 dark:text-gray-300">
@@ -68,6 +72,17 @@
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
               {{ formatPrice(order.totalSumm) }}
+            </td>
+            <!-- Mobile date info -->
+            <td class="px-6 py-4 md:hidden">
+              <div class="flex flex-col space-y-1">
+                <span class="text-xs text-gray-500 dark:text-gray-400">
+                  Created: {{ formatDate(order.createdAt) }}
+                </span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">
+                  Updated: {{ formatDate(order.updatedAt) }}
+                </span>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -89,10 +104,13 @@
             </div>
             <div class="w-px h-4 bg-gray-300 dark:bg-gray-600" v-if="selectedOrders.length > 0"></div>
             <span class="font-medium text-gray-700 dark:text-gray-300">
-              Total Orders: {{ orders.length }}
+              This page: {{ orders.length }}
             </span>
             <span class="font-medium text-gray-700 dark:text-gray-300">
               Total: {{ formatPrice(totalPrice) }}
+            </span>
+            <span class="font-medium text-gray-700 dark:text-gray-300">
+              Total: {{ filteredTotal }}
             </span>
           </div>
         </div>
@@ -102,21 +120,33 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { formatPrice } from '@/utils/formatters'
 import { getStatusConfig } from '@/utils/orderStatuses'
 
 const props = defineProps({
   orders: {
     type: Array,
-    required: true,
-    default: () => []
+    required: true
+  },
+  totalOrders: {
+    type: Number,
+    required: true
+  },
+  filteredTotal: {
+    type: Number,
+    required: true
   }
 })
 
-const emit = defineEmits(['selection-change'])
-
 const selectedOrders = ref([])
+
+watch(() => props.orders, () => {
+  selectedOrders.value = []
+  emit('selection-change', [])
+}, { deep: true })
+
+const emit = defineEmits(['selection-change'])
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)

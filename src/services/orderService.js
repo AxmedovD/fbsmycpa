@@ -7,6 +7,7 @@ export async function getOrders(params = {}) {
       per_page: params.per_page,
       orderNumber: params.orderNumber,
       article: params.article,
+      status: params.status,
       created_date_from: params.created_date_from,
       created_date_to: params.created_date_to,
       last_edit_date_from: params.last_edit_date_from,

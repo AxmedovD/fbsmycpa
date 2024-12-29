@@ -11,6 +11,7 @@ export function useOrders() {
   const error = ref(null)
   const totalOrders = ref(0)
   const totalPages = ref(1)
+  const filteredTotal = ref(0)
   const statusCounts = ref({
     filtered: {},
     total: {}
@@ -27,13 +28,21 @@ export function useOrders() {
 
   const filteredOrders = computed(() => {
     if (!orders.value) return []
-    
-    return orders.value.filter(order => {
-      if (selectedStatus.value !== 'all' && order.status.toLowerCase() !== selectedStatus.value) {
-        return false
-      }
-      return true
-    })
+    return orders.value
+  })
+
+  const hasActiveFilters = computed(() => {
+    return Object.values(activeFilters.value).some(value => !!value)
+  })
+
+  const currentStatusCounts = computed(() => {
+    if (!statusCounts.value) return {}
+    // If there are active filters (except status), use filtered counts
+    if (hasActiveFilters.value) {
+      return statusCounts.value.filtered || {}
+    }
+    // Otherwise use total counts
+    return statusCounts.value.total || {}
   })
 
   const fetchOrders = async (filters = {}) => {
@@ -44,14 +53,19 @@ export function useOrders() {
       const params = {
         page: currentPage.value,
         per_page: perPage.value,
+        status: selectedStatus.value,
         ...filters
       }
       
       const response = await getOrders(params)
       orders.value = response.data || []
       totalOrders.value = response.meta?.total || 0
+      filteredTotal.value = response.meta?.filtered_total || 0
       totalPages.value = response.meta?.last_page || 1
-      statusCounts.value = response.status_counts || { filtered: {}, total: {} }
+      statusCounts.value = {
+        filtered: response.status_counts?.filtered || {},
+        total: response.status_counts?.total || {}
+      }
       selectedOrders.value = []
     } catch (err) {
       error.value = err.message
@@ -84,7 +98,8 @@ export function useOrders() {
       created_date_from: filters.createdDateFrom,
       created_date_to: filters.createdDateTo,
       last_edit_date_from: filters.lastEditDateFrom,
-      last_edit_date_to: filters.lastEditDateTo
+      last_edit_date_to: filters.lastEditDateTo,
+      status: selectedStatus.value !== 'all' ? selectedStatus.value : undefined 
     })
   }
 
@@ -103,27 +118,38 @@ export function useOrders() {
     selectedOrders.value = selected
   }
 
+  const handleStatusChange = (status) => {
+    selectedStatus.value = status
+    currentPage.value = 1
+    fetchOrders({
+      ...activeFilters.value, 
+      orderNumber: activeFilters.value.orderNumber,
+      article: activeFilters.value.article,
+      created_date_from: activeFilters.value.createdDateFrom,
+      created_date_to: activeFilters.value.createdDateTo,
+      last_edit_date_from: activeFilters.value.lastEditDateFrom,
+      last_edit_date_to: activeFilters.value.lastEditDateTo
+    })
+  }
+
   return {
-    // State
     orders,
     selectedOrders,
     selectedStatus,
     currentPage,
     perPage,
-    loading,
-    error,
-    totalOrders,
     totalPages,
-    statusCounts,
-    activeFilters,
+    totalOrders,
+    filteredTotal,
+    statusCounts: currentStatusCounts,
+    hasActiveFilters,
     filteredOrders,
-    
-    // Methods
     fetchOrders,
     handleFilterReset,
     handleFilterApply,
     handlePageUpdate,
     handlePerPageUpdate,
-    handleSelectionChange
+    handleSelectionChange,
+    handleStatusChange
   }
 }

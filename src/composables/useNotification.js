@@ -1,23 +1,33 @@
 import { ref } from 'vue'
 
-const notifications = ref([])
+const notification = ref({
+  show: false,
+  type: 'success',
+  title: '',
+  message: ''
+})
 
 export function useNotification() {
-  const showNotification = (message, type = 'info') => {
-    const id = Date.now()
-    notifications.value.push({
-      id,
-      message,
-      type
-    })
+  const showNotification = ({ type = 'success', title, message }) => {
+    notification.value = {
+      show: true,
+      type,
+      title,
+      message
+    }
 
     setTimeout(() => {
-      notifications.value = notifications.value.filter(n => n.id !== id)
-    }, 5000)
+      notification.value.show = false
+    }, 3000)
+  }
+
+  const hideNotification = () => {
+    notification.value.show = false
   }
 
   return {
-    notifications,
-    showNotification
+    notification,
+    showNotification,
+    hideNotification
   }
 }

@@ -18,6 +18,9 @@ export async function fetchOrders(params = {}) {
         if (formattedIds) {
           queryParams.append('ordersId', formattedIds)
         }
+      } else if (key === 'status' && value !== 'all') {
+        // Only append status if it's not 'all'
+        queryParams.append('status', value)
       } else {
         queryParams.append(key, value)
       }
