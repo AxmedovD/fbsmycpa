@@ -9,14 +9,14 @@ export function useCourierLabel(orders, selectedOrders) {
   const hasSendStatusOrders = computed(() => {
     return orders.value
       .filter(order => selectedOrders.value.includes(order.orderId))
-      .some(order => order.status.toLowerCase() === 'send')
+      .some(order => order.status.toLowerCase() === 'send' || order.status.toLowerCase() === 'delivering')
   })
 
   const getSendStatusOrders = () => {
     return orders.value
       .filter(order => 
         selectedOrders.value.includes(order.orderId) && 
-        order.status.toLowerCase() === 'send'
+        (order.status.toLowerCase() === 'send' || order.status.toLowerCase() === 'delivering')
       )
       .map(order => order.orderId)
   }
